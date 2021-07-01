@@ -3,9 +3,10 @@
 
 # In[1]:
 
-
-import numpy as np
 import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+from tensorflow.keras import activations, regularizers, constraints, initializers
+import numpy as np
 import warnings
 import scipy.sparse as sp
 from time import time
@@ -38,7 +39,7 @@ FLAGS = EasyDict(config)
 
 
 # # 辅助函数
-# 
+#
 # ## 数据读取
 
 # In[3]:
@@ -51,9 +52,16 @@ def load_data_planetoid(dataset):
         with open('data_split/ind.{}.{}'.format(dataset, key), 'rb') as f:
             objects[key] = pickle.load(f, encoding='latin1')
     test_index = [int(x) for x in open('data_split/ind.{}.test.index'.format(dataset))]
+    # print(test_index)
+    # Sorting the test index list
     test_index_sort = np.sort(test_index)
+    # print(test_index_sort)
+    # Return a graph from a dictionary of lists. A dictionary of lists adjacency representation.
+    # print(objects['graph'])
+    # {vertexID: [neighbour_vertexID, neighbour_vertexID, ...], ......}
+    # {0: [633, 1862, 2582], 1: [2, 652, 654], 2: [1986, 332, 1666, 1, 1454], 4: [2176, 1016, 2176, 1761, 1256, 2175], .......}
     G = nx.from_dict_of_lists(objects['graph'])
-
+    # Return adjacency matrix of G.
     A_mat = nx.adjacency_matrix(G)
     X_mat = sp.vstack((objects['allx'], objects['tx'])).tolil()
     X_mat[test_index, :] = X_mat[test_index_sort, :]
@@ -83,6 +91,8 @@ def sparse_dropout(x, dropout_rate, noise_shape):
     return pre_out * (1. / (1 - dropout_rate))
 
 # 稀疏矩阵转稀疏张量
+
+
 def sp_matrix_to_sp_tensor(M):
     if not isinstance(M, sp.csr.csr_matrix):
         M = M.tocsr()
@@ -99,9 +109,6 @@ def sp_matrix_to_sp_tensor(M):
 # In[6]:
 
 
-import tensorflow as tf
-from tensorflow.keras import activations, regularizers, constraints, initializers
-
 class GCNConv(tf.keras.layers.Layer):
     def __init__(self,
                  units,
@@ -117,7 +124,6 @@ class GCNConv(tf.keras.layers.Layer):
         self.use_bias = use_bias
         self.kernel_initializer = initializers.get(kernel_initializer)
         self.bias_initializer = initializers.get(bias_initializer)
-
 
     def build(self, input_shape):
         """ GCN has two inputs : [shape(An), shape(X)]
@@ -164,6 +170,7 @@ class GCNConv(tf.keras.layers.Layer):
 
 tf.get_logger().setLevel('ERROR')
 
+
 class GCN():
     def __init__(self, An, X, sizes, **kwargs):
         self.with_relu = True
@@ -172,7 +179,7 @@ class GCN():
         self.lr = FLAGS.learning_rate
         self.dropout = FLAGS.dropout
         self.verbose = FLAGS.verbose
-        
+
         self.An = An
         self.X = X
         self.layer_sizes = sizes
@@ -207,7 +214,7 @@ class GCN():
             val_losses.append(val_loss)
             toc = time()
             if self.verbose:
-                print("iter:{:03d}".format(it),
+                print("epoch:{:03d}".format(it),
                       "train_loss:{:.4f}".format(train_loss),
                       "train_acc:{:.4f}".format(train_acc),
                       "val_loss:{:.4f}".format(val_loss),
@@ -263,6 +270,7 @@ def preprocess_graph(adj):
     adj_normalized = _D_half @ _adj @ _D_half
     return adj_normalized.tocsr()
 
+
 if __name__ == "__main__":
     # 读取数据
     # A_mat：邻接矩阵
@@ -270,6 +278,7 @@ if __name__ == "__main__":
     # z_vec：label
     # train_idx,val_idx,test_idx: 要使用的节点序号
     A_mat, X_mat, z_vec, train_idx, val_idx, test_idx = load_data_planetoid(FLAGS.dataset)
+    # print(z_vec)
     # 邻居矩阵标准化
     An_mat = preprocess_graph(A_mat)
 
@@ -282,13 +291,10 @@ if __name__ == "__main__":
     gcn.train(train_idx, z_vec[train_idx], val_idx, z_vec[val_idx])
     # 测试
     test_res = gcn.evaluate(test_idx, z_vec[test_idx], training=False)
-    print("Dataset {}".format(FLAGS.dataset),
-          "Test loss {:.4f}".format(test_res[0]),
-          "test acc {:.4f}".format(test_res[1]))
+    
+    print("Dataset {}".format(FLAGS.dataset))
+    print("Test loss {:.4f}".format(test_res[0]))
+    print("test acc {:.4f}".format(test_res[1]))
 
 
 # In[ ]:
-
-
-
-
