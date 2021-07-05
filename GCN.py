@@ -44,6 +44,11 @@ FLAGS = EasyDict(config)
 
 # In[3]:
 
+# Cora数据集由机器学习论文组成,是近年来图深度学习很喜欢使用的数据集
+# 整个数据集有2708篇论文
+# 所有样本点被分为8个类别,类别分别是:1-基于案例;2-遗传算法;3-神经网络;4-概率方法;5-强化学习;6-规则学习;7-理论
+# 每篇论文都由一个1433维的词向量表示,所以每个样本点具有1433个特征
+# 词向量的每个元素都对应一个词，且该元素只有0或1两个取值。取0表示该元素对应的词不在论文中，取1表示在论文中。
 
 def load_data_planetoid(dataset):
     keys = ['x', 'y', 'tx', 'ty', 'allx', 'ally', 'graph']
@@ -60,19 +65,50 @@ def load_data_planetoid(dataset):
     # print(objects['graph'])
     # {vertexID: [neighbour_vertexID, neighbour_vertexID, ...], ......}
     # {0: [633, 1862, 2582], 1: [2, 652, 654], 2: [1986, 332, 1666, 1, 1454], 4: [2176, 1016, 2176, 1761, 1256, 2175], .......}
+    # Total 2708 vertexes,  from 0 to 2707
     G = nx.from_dict_of_lists(objects['graph'])
     # Return adjacency matrix of G.
+    # 邻居矩阵A:维度为N×N表示图中N个节点之间的连接关系
     A_mat = nx.adjacency_matrix(G)
+    # vstack函数可以将稀疏矩阵纵向合并
+    print(type(objects['allx']))
+    # <class 'scipy.sparse.csr.csr_matrix'>
+    print('++++++++++++++++++++++++++++++++++++++++++++++++')
+    print(objects['allx'])
+    print('================================================')
+    print(objects['tx'])
+
+    # 特征矩阵
+    # 特征矩阵X:维度为N×D,表示图中有N个节点,每个节点的特征个数是D
     X_mat = sp.vstack((objects['allx'], objects['tx'])).tolil()
     X_mat[test_index, :] = X_mat[test_index_sort, :]
+    # print('&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&')
+    # print(len(objects['ally']), len(objects['y']))
+    # print('-------------------------------------------------')
+    # print(objects['ally'])
+    # print('#################################################')
+    # print(objects['ty'])
+    
+    # label
+    # print('?????????????????????????????????????????????????')
+    # print(objects['ally'])
     z_vec = np.vstack((objects['ally'], objects['ty']))
     z_vec[test_index, :] = z_vec[test_index_sort, :]
     z_vec = z_vec.argmax(1)
+    # print('.................................................')
+    # print(z_vec)
 
     train_idx = range(len(objects['y']))
+    print(train_idx)
+    
     val_idx = range(len(objects['y']), len(objects['y']) + 500)
+    print(val_idx)
+    
     test_idx = test_index_sort.tolist()
+    # print(test_idx)
 
+    # A_mat=邻接矩阵, X_mat=特征矩阵, z_vec=label
+    # train_idx,val_idx,test_idx: 要使用的节点序号
     return A_mat, X_mat, z_vec, train_idx, val_idx, test_idx
 
 
