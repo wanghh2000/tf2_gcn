@@ -71,16 +71,25 @@ def load_data_planetoid(dataset):
     # 邻居矩阵A:维度为N×N表示图中N个节点之间的连接关系
     A_mat = nx.adjacency_matrix(G)
     # vstack函数可以将稀疏矩阵纵向合并
-    print(type(objects['allx']))
+    
+    # print(type(objects['allx']))
     # <class 'scipy.sparse.csr.csr_matrix'>
-    print('++++++++++++++++++++++++++++++++++++++++++++++++')
-    print(objects['allx'])
-    print('================================================')
-    print(objects['tx'])
+    # print('++++++++++++++++++++++++++++++++++++++++++++++++')
+    # print(objects['allx'].get_shape())
+    # print(objects['allx'])
+    # print('================================================')
+    # print(objects['tx'].get_shape())
+    # print(objects['tx'])
+
+    print(type(objects['ally']))
+    # (rows, cols)
+    print(objects['ally'].shape) 
+    print(objects['ally'])
 
     # 特征矩阵
     # 特征矩阵X:维度为N×D,表示图中有N个节点,每个节点的特征个数是D
     X_mat = sp.vstack((objects['allx'], objects['tx'])).tolil()
+    # tolil([copy])：返回稀疏矩阵的lil_matrix形式
     X_mat[test_index, :] = X_mat[test_index_sort, :]
     # print('&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&')
     # print(len(objects['ally']), len(objects['y']))
